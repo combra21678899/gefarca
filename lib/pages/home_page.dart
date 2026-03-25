@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> menu = [
     {'title': 'Inventario', 'icon': Icons.inventory, 'route': '/inventory'},
@@ -11,8 +16,36 @@ class HomePage extends StatelessWidget {
     {'title': 'Perfil', 'icon': Icons.person, 'route': '/profile'},
   ];
 
+  // ✅ Ahora usa el context del State, no del StatelessWidget
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Cerrar sesión'),
+        content: Text('¿Estás seguro que deseas salir?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Salir', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
@@ -20,124 +53,132 @@ class HomePage extends StatelessWidget {
         title: Text('Gefarca'),
         centerTitle: true,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.red),
+            tooltip: 'Cerrar sesión',
+            onPressed: _confirmLogout, // ✅ Sin parámetro context
+          ),
+        ],
       ),
 
-      // ✅ Todo dentro de un solo CustomScrollView
-      body: CustomScrollView(
-        slivers: [
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
 
-          SliverPadding(
-            padding: EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
+            Text('Bienvenido 👋',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4),
+            Text('Panel de control',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13)),
 
-                // Bienvenido
-                Text(
-                  'Bienvenido 👋',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Panel de control',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                SizedBox(height: 20),
+            SizedBox(height: 16),
 
-                // Tarjetas resumen fila 1
-                Row(
-                  children: [
-                    Expanded(child: _buildCard('Productos', '120', Icons.inventory)),
-                    SizedBox(width: 10),
-                    Expanded(child: _buildCard('Usuarios', '18', Icons.people)),
-                  ],
-                ),
-                SizedBox(height: 10),
-
-                // Tarjetas resumen fila 2
-                Row(
-                  children: [
-                    Expanded(child: _buildCard('Movimientos', '240', Icons.swap_horiz)),
-                    SizedBox(width: 10),
-                    Expanded(child: _buildCard('Alertas', '5', Icons.warning)),
-                  ],
-                ),
-                SizedBox(height: 20),
-
-                // Título módulos
-                Text(
-                  'Módulos',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10),
-
-              ]),
+            SizedBox(
+              height: screenHeight * 0.10,
+              child: Row(
+                children: [
+                  Expanded(child: _buildCard('Productos', '120', Icons.inventory)),
+                  SizedBox(width: 10),
+                  Expanded(child: _buildCard('Usuarios', '18', Icons.people)),
+                ],
+              ),
             ),
-          ),
 
-          // ✅ SliverGrid maneja su propio scroll sin conflictos
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
+            SizedBox(height: 10),
+
+            SizedBox(
+              height: screenHeight * 0.10,
+              child: Row(
+                children: [
+                  Expanded(child: _buildCard('Movimientos', '240', Icons.swap_horiz)),
+                  SizedBox(width: 10),
+                  Expanded(child: _buildCard('Alertas', '5', Icons.warning)),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            Text('Módulos',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+            SizedBox(height: 10),
+
+            Expanded(
+              child: GridView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: menu.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: (screenWidth / 2) /
+                      ((screenHeight - screenHeight * 0.20 - 200) / 3),
+                ),
+                itemBuilder: (context, index) {
                   final item = menu[index];
                   return GestureDetector(
                     onTap: () => Navigator.pushNamed(context, item['route']),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 8),
+                          BoxShadow(color: Colors.black12, blurRadius: 6),
                         ],
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(item['icon'], size: 40, color: Colors.blue),
-                          SizedBox(height: 10),
+                          Icon(item['icon'], size: 32, color: Colors.blue),
+                          SizedBox(height: 8),
                           Text(
                             item['title'],
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   );
                 },
-                childCount: menu.length,
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.4, // ✅ Controla el alto de cada celda
               ),
             ),
-          ),
 
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCard(String title, String value, IconData icon) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, size: 30, color: Colors.blue),
-          SizedBox(height: 10),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          SizedBox(height: 5),
-          Text(title, style: TextStyle(color: Colors.grey[600])),
+          Icon(icon, size: 26, color: Colors.blue),
+          SizedBox(width: 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+            ],
+          ),
         ],
       ),
     );
