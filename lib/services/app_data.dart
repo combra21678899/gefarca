@@ -2,8 +2,20 @@ import '../models/product.dart';
 
 class AppData {
   static List<Product> products = [
-    Product(code: '000023', name: 'Acetaminofen', stock: 0, price: 1000),
-    Product(code: '000024', name: 'Dolex', stock: 0, price: 2700),
+    Product(
+      id: '1', 
+      code: '000023', 
+      name: 'Acetaminofen', 
+      stock: 0, 
+      price: 1000.0,
+    ),
+    Product(
+      id: '2', 
+      code: '000024', 
+      name: 'Dolex', 
+      stock: 0, 
+      price: 2700.0,
+    ),
   ];
 
   static List<Map<String, String>> history = [];

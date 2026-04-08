@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-class SuppliersPage extends StatelessWidget {
+class SuppliersPage extends StatefulWidget {
+  @override
+  _SuppliersPageState createState() => _SuppliersPageState();
+}
+
+class _SuppliersPageState extends State<SuppliersPage> {
   final List<Map<String, String>> suppliers = [
     {'name': 'Distribuidora Central', 'phone': '3101111111', 'city': 'Cartagena'},
     {'name': 'Farmalisto Pro', 'phone': '3202222222', 'city': 'Barranquilla'},
