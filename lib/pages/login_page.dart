@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -22,18 +24,14 @@ class _LoginPageState extends State<LoginPage>
   @override
   void initState() {
     super.initState();
-
-    // ✅ Animación de escala al entrar
     _animController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 600),
     );
-
     _scaleAnimation = CurvedAnimation(
       parent: _animController,
       curve: Curves.elasticOut,
     );
-
     _animController.forward();
   }
 
@@ -48,13 +46,12 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Future<void> login() async {
-    // Cierra el teclado
     FocusScope.of(context).unfocus();
 
-    String email = emailController.text.trim();
+    String usuario = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (usuario.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Por favor completa todos los campos'),
@@ -66,39 +63,55 @@ class _LoginPageState extends State<LoginPage>
 
     setState(() => _isLoading = true);
 
-    // Simula delay de red
-    await Future.delayed(Duration(seconds: 1));
+    try {
+      // 👇 URL de tu WireMock — el {thingId} puede ser cualquier valor, usamos "login"
+      final url = Uri.parse('https://ym3yv.wiremockapi.cloud/things/login');
 
-    setState(() => _isLoading = false);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'usuario': usuario,
+          'password': password,
+        }),
+      );
 
-    if (email == 'admin' && password == '1234') {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
+      setState(() => _isLoading = false);
+
+      if (response.statusCode == 200) {
+        // Login exitoso
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Credenciales incorrectas'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        passwordController.clear();
+        FocusScope.of(context).requestFocus(passwordFocus);
+      }
+
+    } catch (e) {
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Credenciales incorrectas'),
+          content: Text('Error de conexión'),
           backgroundColor: Colors.red,
         ),
       );
-
-      // ✅ Limpia la contraseña y regresa el foco
-      passwordController.clear();
-      FocusScope.of(context).requestFocus(passwordFocus);
     }
   }
 
+  // ... el resto del build() queda igual que tenías
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-
       body: Center(
         child: SingleChildScrollView(
-
-          // ✅ ScaleTransition envuelve la tarjeta
           child: ScaleTransition(
             scale: _scaleAnimation,
-
             child: Container(
               width: 350,
               padding: EdgeInsets.all(24),
@@ -112,54 +125,29 @@ class _LoginPageState extends State<LoginPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
-                  // Logo / Ícono
                   CircleAvatar(
                     radius: 35,
                     backgroundColor: Colors.blue.shade50,
-                    child: Icon(Icons.local_pharmacy,
-                        size: 40, color: Colors.blue),
+                    child: Icon(Icons.local_pharmacy, size: 40, color: Colors.blue),
                   ),
-
                   SizedBox(height: 16),
-
-                  Text(
-                    'GEFARCA',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-
+                  Text('GEFARCA',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 2)),
                   SizedBox(height: 4),
-
-                  Text(
-                    'Sistema de farmacia',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-
+                  Text('Sistema de farmacia', style: TextStyle(color: Colors.grey[600])),
                   SizedBox(height: 24),
-
-                  // ✅ Campo usuario con foco controlado
                   TextField(
                     controller: emailController,
                     focusNode: emailFocus,
                     textInputAction: TextInputAction.next,
-                    onSubmitted: (_) =>
-                        FocusScope.of(context).requestFocus(passwordFocus),
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(passwordFocus),
                     decoration: InputDecoration(
                       labelText: 'Usuario',
                       prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
-
                   SizedBox(height: 12),
-
-                  // ✅ Campo contraseña con mostrar/ocultar
                   TextField(
                     controller: passwordController,
                     focusNode: passwordFocus,
@@ -169,53 +157,31 @@ class _LoginPageState extends State<LoginPage>
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
                       prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off),
-                        onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
+                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                   ),
-
                   SizedBox(height: 24),
-
-                  // ✅ Botón con loading spinner
                   ElevatedButton(
                     onPressed: _isLoading ? null : login,
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isLoading
                         ? SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'Iniciar sesión',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                            height: 22, width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                        : Text('Iniciar sesión', style: TextStyle(fontSize: 16)),
                   ),
-
                   SizedBox(height: 8),
-
                   TextButton(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/register'),
+                    onPressed: () => Navigator.pushNamed(context, '/register'),
                     child: Text('¿No tienes cuenta? Crear cuenta'),
                   ),
-
                 ],
               ),
             ),
